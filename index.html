@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chess-Web</title>
+      <link rel="icon" type="image/x-icon" href="./public/img/Z-favico.png">
+    <script type="module" src="/src/main.ts" defer></script>
+  </head>
+  <body>
+  
+    <main>
+      <section class="mainSection" id="boardContainer">
+      <h1>Chess-Web</h1>
+      <div id="board" class="boardErea">
+      </div>
+      </section>
+      <section class="gameStats">
+        <h1>Game stats</h1>
+        <h2 id="turnIndicator">Current Turn: White</h2>
+        <h3 id="whiteCaptured">White Captured Pieces: 0</h3>
+        <h3 id="blackCaptured">Black Captured Pieces: 0</h3>
+        <section class="history-section">
+          <h2 id="moveHistory">Move History:</h2>
+          <ul id="moveList" class="move-history">
+          
+          </ul>
+        </section>
+        <button id="resetButton">Reset Game</button>
+      </section>
+    
+    </main>
+
+    <template></template>
+  </body>
+</html>
