@@ -11,16 +11,16 @@ the logical coordinate are like this:
     (0,0) (1,0) (2,0) (3,0) (4,0) (5,0) (6,0) (7,0)
 */
 
-import { cellule } from "./Cellule.ts";
-import { Piece, King, Pawn, Rook, Bishop, Queen } from "./Piece.ts";
+import {cellule} from './Cellule.ts';
+import {Bishop, King, Pawn, Piece, Queen, Rook} from './Piece.ts';
 
 export class ChessBoard {
   private cells: cellule[][];
   private history: string[] = [];
   private whitePressureCases: Set<string> = new Set();
   private blackPressureCases: Set<string> = new Set();
-  private turn: "white" | "black" = "white";
-  private selectedPiece: Piece | null = null;
+  private turn: 'white'|'black' = 'white';
+  private selectedPiece: Piece|null = null;
   private isKingCheckWithoutEscape: boolean = false;
   private piecesCanSaveHim: Piece[] = [];
   private moveCanSaveHim: string[] = [];
@@ -37,9 +37,9 @@ export class ChessBoard {
 
   public getCellAt(x: number, y: number): cellule;
   public getCellAt(position: string): cellule;
-  public getCellAt(x: number | string, y?: number): cellule {
-    if (typeof x === "string") {
-      const { x: posX, y: posY } = this.translatePosition(x);
+  public getCellAt(x: number|string, y?: number): cellule {
+    if (typeof x === 'string') {
+      const {x: posX, y: posY} = this.translatePosition(x);
       return this.getCellAt(posX, posY);
     } else {
       return this.cells[y!][x!];
@@ -70,48 +70,45 @@ export class ChessBoard {
     if (!cell.isCellEmpty() && cell.getPiece() === piece) {
       cell.clearPiece();
     } else {
-      throw new Error(
-        `Cell at (${x}, ${y}) is empty or does not contain the specified piece.`
-      );
+      throw new Error(`Cell at (${x}, ${
+          y}) is empty or does not contain the specified piece.`);
     }
   }
 
-  public movePiece(position: string): Piece | null {
-    if (!this.selectedPiece) throw new Error("No piece selected to move.");
+  public movePiece(position: string): Piece|null {
+    if (!this.selectedPiece) throw new Error('No piece selected to move.');
 
-    const { x: oldX, y: oldY } = this.translatePosition(
-      this.selectedPiece!.getPosition()
-    );
-    const { x: newX, y: newY } = this.translatePosition(position);
+    const {x: oldX, y: oldY} =
+        this.translatePosition(this.selectedPiece!.getPosition());
+    const {x: newX, y: newY} = this.translatePosition(position);
     const oldCell = this.getCellAt(oldX, oldY);
     const newCell = this.getCellAt(newX, newY);
 
     this.updateHistory(oldCell.getPosition(), newCell.getPosition());
 
     if (!oldCell.isCellEmpty() && oldCell.getPiece() === this.selectedPiece) {
-      if (
-        newCell.isCellEmpty() ||
-        newCell.getPiece().getColor() !== this.selectedPiece.getColor()
-      ) {
+      if (newCell.isCellEmpty() ||
+          newCell.getPiece().getColor() !== this.selectedPiece.getColor()) {
         this.Casteling(oldCell, newCell, this.selectedPiece);
         this.enPassant(oldCell, newCell, this.selectedPiece);
 
-        this.removePiece(this.selectedPiece); //pop old piece from his cell
+        this.removePiece(this.selectedPiece);  // pop old piece from his cell
         if (!newCell.isCellEmpty()) {
-          this.removePiece(newCell.getPiece()); //pop piece from his cell
+          this.removePiece(newCell.getPiece());  // pop piece from his cell
         }
-        this.selectedPiece.setPosition(newX, newY); //change position of selected piece
-        this.PutPiece(this.selectedPiece); //put the selected piece in the new cellule
+        this.selectedPiece.setPosition(
+            newX, newY);  // change position of selected piece
+        this.PutPiece(
+            this.selectedPiece);  // put the selected piece in the new cellule
       } else {
         throw new Error(`Target cell at (${newX}, ${newY}) is not empty.`);
       }
     } else {
-      throw new Error(
-        `No piece found at (${oldX}, ${oldY}) or it does not match the specified piece.`
-      );
+      throw new Error(`No piece found at (${oldX}, ${
+          oldY}) or it does not match the specified piece.`);
     }
 
-    this.turn = this.turn === "white" ? "black" : "white";
+    this.turn = this.turn === 'white' ? 'black' : 'white';
 
     let isPawnUpgraded = this.checkIfPawnUpgrade(this.selectedPiece!);
     let pawn = null;
@@ -120,68 +117,65 @@ export class ChessBoard {
       pawn = this.selectedPiece!;
     }
 
+    if (this.isKingCheckWithoutEscape) {
+      this.piecesCanSaveHim = [];
+      this.moveCanSaveHim = [];
+      this.isKingCheckWithoutEscape = false;
+    }
+
     this.selectedPiece = null;
 
     return pawn;
   }
   private Casteling(oldCell: cellule, newCell: cellule, piece: Piece): void {
-    if (
-      (oldCell.getPosition() === "e1" &&
-        piece instanceof King &&
-        newCell.getPosition() === "g1") ||
-      (oldCell.getPosition() === "e1" &&
-        piece instanceof King &&
-        newCell.getPosition() === "c1") ||
-      (oldCell.getPosition() === "e8" &&
-        piece instanceof King &&
-        newCell.getPosition() === "g8") ||
-      (oldCell.getPosition() === "e8" &&
-        piece instanceof King &&
-        newCell.getPosition() === "c8")
-    ) {
+    if ((oldCell.getPosition() === 'e1' && piece instanceof King &&
+         newCell.getPosition() === 'g1') ||
+        (oldCell.getPosition() === 'e1' && piece instanceof King &&
+         newCell.getPosition() === 'c1') ||
+        (oldCell.getPosition() === 'e8' && piece instanceof King &&
+         newCell.getPosition() === 'g8') ||
+        (oldCell.getPosition() === 'e8' && piece instanceof King &&
+         newCell.getPosition() === 'c8')) {
       // Castling logic can be added here
       switch (newCell.getPosition()) {
-        case "g1":
+        case 'g1':
           // Move the rook to f1
           this.movePieceTo(this.getCellAt(7, 0).getPiece(), 5, 0);
           this.history.pop();
-          this.history.push("0-0");
+          this.history.push('0-0');
           break;
-        case "c1":
+        case 'c1':
           // Move the rook to d1
           this.movePieceTo(this.getCellAt(0, 0).getPiece(), 3, 0);
           this.history.pop();
-          this.history.push("0-0-0");
+          this.history.push('0-0-0');
           break;
-        case "g8":
+        case 'g8':
           // Move the rook to f8
           this.movePieceTo(this.getCellAt(7, 7).getPiece(), 5, 7);
           this.history.pop();
-          this.history.push("0-0");
+          this.history.push('0-0');
           break;
-        case "c8":
+        case 'c8':
           // Move the rook to d8
           this.movePieceTo(this.getCellAt(0, 7).getPiece(), 3, 7);
           this.history.pop();
-          this.history.push("0-0-0");
+          this.history.push('0-0-0');
           break;
       }
     }
   }
   private enPassant(oldCell: cellule, newCell: cellule, piece: Piece): void {
-    const lastMove: string | null = this.getLastMove();
+    const lastMove: string|null = this.getLastMove();
     if (!lastMove) return;
 
     const pawnX = lastMove.charCodeAt(4) - 97;
-    if (
-      newCell.isCellEmpty() &&
-      piece instanceof Pawn &&
-      oldCell.getX() !== newCell.getX()
-    ) {
+    if (newCell.isCellEmpty() && piece instanceof Pawn &&
+        oldCell.getX() !== newCell.getX()) {
       let pawnDied: Piece = this.getCellAt(pawnX, oldCell.getY()).getPiece();
       this.removePiece(pawnDied);
       this.history.pop();
-      this.history.push("e.p.");
+      this.history.push('e.p.');
     }
   }
 
@@ -193,12 +187,11 @@ export class ChessBoard {
     const isEating: boolean = !newCell.isCellEmpty();
 
     const moveNotation = `${pieceType}${oldCell.getPosition()}${
-      isEating ? "x" : "-"
-    }${newCell.getPosition()}`;
+        isEating ? 'x' : '-'}${newCell.getPosition()}`;
     this.history.push(moveNotation);
   }
 
-  public getLastMove(): string | null {
+  public getLastMove(): string|null {
     if (this.history.length === 0) {
       return null;
     }
@@ -208,18 +201,18 @@ export class ChessBoard {
   private getPieceType(piece: Piece): string {
     const constructorName = piece.constructor.name;
     switch (constructorName) {
-      case "Pawn":
-        return "P";
-      case "Rook":
-        return "R";
-      case "Knight":
-        return "N";
-      case "Bishop":
-        return "B";
-      case "Queen":
-        return "Q";
-      case "King":
-        return "K";
+      case 'Pawn':
+        return 'P';
+      case 'Rook':
+        return 'R';
+      case 'Knight':
+        return 'N';
+      case 'Bishop':
+        return 'B';
+      case 'Queen':
+        return 'Q';
+      case 'King':
+        return 'K';
       default:
         throw new Error(`Unknown piece type: ${constructorName}`);
     }
@@ -228,10 +221,8 @@ export class ChessBoard {
   private checkIfPawnUpgrade(piece: Piece): boolean {
     if (piece instanceof Pawn) {
       const y = piece.getY();
-      if (
-        (y === 7 && piece.getColor() === "white") ||
-        (y === 0 && piece.getColor() === "black")
-      ) {
+      if ((y === 7 && piece.getColor() === 'white') ||
+          (y === 0 && piece.getColor() === 'black')) {
         return true;
       }
     }
@@ -268,10 +259,10 @@ export class ChessBoard {
         const piece = cell.getPiece();
         if (piece) {
           let buffer = piece.getPossiblePressure(this);
-          if (piece.getColor() === "white") {
+          if (piece.getColor() === 'white') {
             buffer.forEach((move) => this.whitePressureCases.add(move));
           }
-          if (piece.getColor() === "black") {
+          if (piece.getColor() === 'black') {
             buffer.forEach((move) => this.blackPressureCases.add(move));
           }
         }
@@ -280,22 +271,20 @@ export class ChessBoard {
   }
 
   public getPressure(white: boolean): string[] {
-    return white
-      ? Array.from(this.whitePressureCases)
-      : Array.from(this.blackPressureCases);
+    return white ? Array.from(this.whitePressureCases) :
+                   Array.from(this.blackPressureCases);
   }
 
   public getPieceCount(color: string): number {
-    return this.cells
-      .flat()
-      .filter((cell) => cell.getPiece()?.getColor() === color).length;
+    return this.cells.flat()
+        .filter((cell) => cell.getPiece()?.getColor() === color)
+        .length;
   }
 
   public checkForCheck(
-    check: { white: boolean; black: boolean },
-    checkmate: { white: boolean; black: boolean },
-    pat: { white: boolean; black: boolean }
-  ): void {
+      check: {white: boolean; black: boolean},
+      checkmate: {white: boolean; black: boolean},
+      pat: {white: boolean; black: boolean}): void {
     // Check for check
     const whiteKing = this.findKing(true)!;
     const blackKing = this.findKing(false)!;
@@ -326,35 +315,30 @@ export class ChessBoard {
     }
   }
 
-  public findKing(white: boolean): Piece | null {
+  public findKing(white: boolean): Piece|null {
     return (
-      this.cells
-        .flat()
-        .find((cell) => {
-          const piece = cell.getPiece();
-          return (
-            piece instanceof King &&
-            piece.getColor() === (white ? "white" : "black")
-          );
-        })
-        ?.getPiece() || null
-    );
+        this.cells.flat()
+            .find((cell) => {
+              const piece = cell.getPiece();
+              return (
+                  piece instanceof King &&
+                  piece.getColor() === (white ? 'white' : 'black'));
+            })
+            ?.getPiece() ||
+        null);
   }
 
   private doesKingHaveNoEscape(
-    white: boolean,
-    king: Piece,
-    pat: boolean = false
-  ): boolean {
+      white: boolean, king: Piece, pat: boolean = false): boolean {
     const direction = [
-      { dx: 0, dy: 1 }, // Up
-      { dx: 1, dy: 1 }, // Up-Right
-      { dx: 1, dy: 0 }, // Right
-      { dx: 1, dy: -1 }, // Down-Right
-      { dx: 0, dy: -1 }, // Down
-      { dx: -1, dy: -1 }, // Down-Left
-      { dx: -1, dy: 0 }, // Left
-      { dx: -1, dy: 1 }, // Up-Left
+      {dx: 0, dy: 1},    // Up
+      {dx: 1, dy: 1},    // Up-Right
+      {dx: 1, dy: 0},    // Right
+      {dx: 1, dy: -1},   // Down-Right
+      {dx: 0, dy: -1},   // Down
+      {dx: -1, dy: -1},  // Down-Left
+      {dx: -1, dy: 0},   // Left
+      {dx: -1, dy: 1},   // Up-Left
     ];
 
     let allCells: number = 0;
@@ -369,20 +353,18 @@ export class ChessBoard {
           if (pat && this.blackPressureCases.has(pos)) {
             unplayableCellsCount++;
           } else if (
-            !pat &&
-            (this.getCellAt(newX, newY).getPiece()?.getColor() === "white" ||
-              this.blackPressureCases.has(pos))
-          ) {
+              !pat &&
+              (this.getCellAt(newX, newY).getPiece()?.getColor() === 'white' ||
+               this.blackPressureCases.has(pos))) {
             unplayableCellsCount++;
           }
         } else {
           if (pat && this.whitePressureCases.has(pos)) {
             unplayableCellsCount++;
           } else if (
-            !pat &&
-            (this.getCellAt(newX, newY).getPiece()?.getColor() === "black" ||
-              this.whitePressureCases.has(pos))
-          ) {
+              !pat &&
+              (this.getCellAt(newX, newY).getPiece()?.getColor() === 'black' ||
+               this.whitePressureCases.has(pos))) {
             unplayableCellsCount++;
           }
         }
@@ -420,29 +402,29 @@ export class ChessBoard {
   private checkIfPieceAtIsPinnedWrong(position: string): boolean {
     const cell = this.getCellAt(position);
     const piece = cell.getPiece();
-    let direction: { dx: number; dy: number }[];
+    let direction: {dx: number; dy: number}[];
 
     if (piece.getPinnedH() && piece.getPinnedV()) {
       direction = [
-        { dx: 1, dy: 1 },
-        { dx: -1, dy: -1 },
-        { dx: 1, dy: -1 },
-        { dx: -1, dy: 1 },
+        {dx: 1, dy: 1},
+        {dx: -1, dy: -1},
+        {dx: 1, dy: -1},
+        {dx: -1, dy: 1},
       ];
     } else if (piece.getPinnedH()) {
       direction = [
-        { dx: 1, dy: 0 },
-        { dx: -1, dy: 0 },
+        {dx: 1, dy: 0},
+        {dx: -1, dy: 0},
       ];
     } else if (piece.getPinnedV()) {
       direction = [
-        { dx: 0, dy: 1 },
-        { dx: 0, dy: -1 },
+        {dx: 0, dy: 1},
+        {dx: 0, dy: -1},
       ];
     }
 
-    let pinnerPiece: Piece | null = null;
-    let king: Piece | null = null;
+    let pinnerPiece: Piece|null = null;
+    let king: Piece|null = null;
 
     for (const dir of direction!) {
       let newX = piece.getX() + dir.dx;
@@ -459,11 +441,8 @@ export class ChessBoard {
         }
         if (targetCell.getPiece().getColor() !== piece.getColor()) {
           const targetPiece = targetCell.getPiece();
-          if (
-            targetPiece instanceof Rook ||
-            targetPiece instanceof Bishop ||
-            targetPiece instanceof Queen
-          ) {
+          if (targetPiece instanceof Rook || targetPiece instanceof Bishop ||
+              targetPiece instanceof Queen) {
             if (targetPiece instanceof King) {
               king = targetPiece;
             }
@@ -477,12 +456,10 @@ export class ChessBoard {
     return pinnerPiece === null || king === null;
   }
 
-  public checkForCheckmate(white: boolean): {
-    check: boolean;
-    positions: string[];
-  } {
+  public checkForCheckmate(white: boolean):
+      {check: boolean; positions: string[];} {
     const king = this.findKing(white);
-    if (!king) throw new Error("King should not be null");
+    if (!king) throw new Error('King should not be null');
 
     const piecesCanProtect = this.checkIfPiecesCanProtect(white, king);
     this.piecesCanSaveHim = piecesCanProtect.piece;
@@ -492,18 +469,14 @@ export class ChessBoard {
       positions.push(piece.getPosition());
     });
 
-    return { check: !piecesCanProtect.canProtect, positions };
+    return {check: !piecesCanProtect.canProtect, positions};
   }
 
-  private checkIfPiecesCanProtect(
-    white: boolean,
-    king: Piece
-  ): { canProtect: boolean; piece: Piece[] } {
+  private checkIfPiecesCanProtect(white: boolean, king: Piece):
+      {canProtect: boolean; piece: Piece[]} {
     const pieces = this.getAllPieces(white);
-    const attackingPiece: Piece = this.findAttackingPiece(
-      king,
-      this.getAllPieces(!white)
-    )!;
+    const attackingPiece: Piece =
+        this.findAttackingPiece(king, this.getAllPieces(!white))!;
 
     let possibleProtectingPiece: Piece[] = [];
     for (const piece of pieces) {
@@ -519,20 +492,17 @@ export class ChessBoard {
   }
 
   private getAllPieces(white: boolean): Piece[] {
-    return this.cells.flatMap((row) =>
-      row
-        .filter((cell) => {
-          const piece = cell.getPiece();
-          return piece && piece.getColor() === (white ? "white" : "black");
-        })
-        .map((cell) => cell.getPiece())
-    );
+    return this.cells.flatMap(
+        (row) => row.filter((cell) => {
+                      const piece = cell.getPiece();
+                      return piece &&
+                          piece.getColor() === (white ? 'white' : 'black');
+                    })
+                     .map((cell) => cell.getPiece()));
   }
 
-  private findAttackingPiece(
-    king: Piece,
-    attackingPieces: Piece[]
-  ): Piece | null {
+  private findAttackingPiece(king: Piece, attackingPieces: Piece[]): Piece
+      |null {
     const kingPosition = king.getPosition();
     for (const piece of attackingPieces) {
       const attackersMoves = piece.getPressure();
@@ -540,21 +510,19 @@ export class ChessBoard {
         return piece;
       }
     }
-    throw new Error("An attacking piece should be found");
+    throw new Error('An attacking piece should be found');
   }
 
   private canProtectKing(
-    attackingPiece: Piece,
-    potentialProtectingPiece: Piece,
-    king: Piece
-  ): boolean {
+      attackingPiece: Piece, potentialProtectingPiece: Piece,
+      king: Piece): boolean {
     const moves = potentialProtectingPiece.getPossibleMoves(this);
 
-    let line: { dx: number; dy: number } = {
+    let line: {dx: number; dy: number} = {
       dx: attackingPiece.getX() - king.getX(),
       dy: attackingPiece.getY() - king.getY(),
     };
-    line = { dx: line.dx / Math.abs(line.dx), dy: line.dy / Math.abs(line.dy) };
+    line = {dx: line.dx / Math.abs(line.dx), dy: line.dy / Math.abs(line.dy)};
 
     let possibleProtectingPositions: string[] = [];
 
@@ -564,8 +532,7 @@ export class ChessBoard {
       newX += line.dx;
       newY += line.dy;
       possibleProtectingPositions.push(
-        String.fromCharCode(97 + newX) + (newY + 1).toString()
-      );
+          String.fromCharCode(97 + newX) + (newY + 1).toString());
     }
 
     let buffer: boolean = false;
@@ -580,7 +547,7 @@ export class ChessBoard {
   }
 
   public isPiecePlayable(position: string): boolean {
-    const { x, y } = this.translatePosition(position);
+    const {x, y} = this.translatePosition(position);
     const cell = this.getCellAt(x, y);
     if (!cell || cell.isCellEmpty()) return false;
 
@@ -588,10 +555,10 @@ export class ChessBoard {
     return piece && piece.getColor() === this.turn;
   }
 
-  private translatePosition(position: string): { x: number; y: number } {
-    const x = position.charCodeAt(0) - 97; // 'a' is 97 in ASCII
-    const y = parseInt(position.charAt(1)) - 1; // Convert to zero-based index
-    return { x, y };
+  private translatePosition(position: string): {x: number; y: number} {
+    const x = position.charCodeAt(0) - 97;       // 'a' is 97 in ASCII
+    const y = parseInt(position.charAt(1)) - 1;  // Convert to zero-based index
+    return {x, y};
   }
 
   public selectPieceAndGetPossibleMove(position: string): string[] {
@@ -626,8 +593,8 @@ export class ChessBoard {
     this.movePiece(position);
     this.selectedPiece = buffer;
 
-    this.turn = this.turn === "white" ? "black" : "white";
-    //we need to do that to don't fuck the game state
+    this.turn = this.turn === 'white' ? 'black' : 'white';
+    // we need to do that to don't fuck the game state
   }
 
   public releaseBadPinnedPieces(): void {
